@@ -721,6 +721,9 @@ ramips_board_detect() {
 	*"ZyXEL Keenetic Viva")
 		name="kng_rc"
 		;;
+	*"ZyXEL WAP6805")
+		name="wap6805"
+		;;
 	*"YK1")
 		name="youku-yk1"
 		;;
