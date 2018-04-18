@@ -3,7 +3,7 @@
 #
 
 KERNEL_DTB += -d21
-DEVICE_VARS += TPLINK_BOARD_ID TPLINK_HEADER_VERSION TPLINK_HWID TPLINK_HWREV
+DEVICE_VARS += TPLINK_BOARD_ID TPLINK_HEADER_VERSION TPLINK_HWID TPLINK_HWREV MITRASTAR_MODEL_ID MITRASTAR_CUST_ID
 
 define Build/elecom-gst-factory
   $(eval product=$(word 1,$(1)))
@@ -530,6 +530,28 @@ define Device/zbt-wg3526-32M
 	kmod-usb3 kmod-usb-ledtrig-usbport wpad-mini
 endef
 TARGET_DEVICES += zbt-wg3526-32M
+
+define Device/wap6805
+  DTS := WAP6805
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  FILESYSTEMS := squashfs
+  IMAGE_SIZE := $(ralink_default_fw_size_32M)
+  DEVICE_TITLE := ZyXEL WAP6805
+  DEVICE_PACKAGES := \
+	kmod-mt7603 kmod-mt76x2 \
+	kmod-usb3 kmod-usb-ledtrig-usbport wpad-mini \
+	-swconfig
+  MITRASTAR_MODEL_ID := 8008
+  MITRASTAR_CUST_ID := ffff
+  KERNEL_SIZE := 4096k
+  KERNEL := $(KERNEL_DTB) | mitrastar lzma
+  IMAGES += factory.bin
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  UBINIZE_OPTS := -E 5
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += wap6805
 
 # FIXME: is this still needed?
 define Image/Prepare
