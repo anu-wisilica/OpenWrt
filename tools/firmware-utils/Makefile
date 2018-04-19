@@ -86,6 +86,7 @@ define Host/Compile
 	$(call cc,mkdlinkfw mkdlinkfw-lib, -lz -Wall --std=gnu99)
 	$(call cc,dns313-header, -Wall)
 	$(call cc,mksercommfw, -Wall --std=gnu99)
+	$(call cc,mkmitrastar, -lz)
 endef
 
 define Host/Install
