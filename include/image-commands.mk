@@ -293,6 +293,16 @@ define Build/tplink-v2-image
 	rm -rf $@.new
 endef
 
+define Build/mitrastar
+	mkmitrastar -A $(LINUX_KARCH) \
+		-O linux -T kernel \
+		-C $(1) -a $(KERNEL_LOADADDR) -e $(if $(KERNEL_ENTRY),$(KERNEL_ENTRY),$(KERNEL_LOADADDR)) \
+		-n '$(if $(UIMAGE_NAME),$(UIMAGE_NAME),$(call toupper,$(LINUX_KARCH)) $(VERSION_DIST) Linux-$(LINUX_VERSION))' \
+		-c '$(if $(UIMAGE_NAME),$(UIMAGE_NAME),$(call toupper,$(LINUX_KARCH)) $(VERSION_DIST) Linux-$(LINUX_VERSION))' \
+		-i $(MITRASTAR_MODEL_ID) -I $(MITRASTAR_CUST_ID) -d $@ $@.new
+	mv $@.new $@
+endef
+
 json_quote=$(subst ','\'',$(subst ",\",$(1)))
 #")')
 metadata_devices=$(if $(1),$(subst "$(space)","$(comma)",$(strip $(foreach v,$(1),"$(call json_quote,$(v))"))))
