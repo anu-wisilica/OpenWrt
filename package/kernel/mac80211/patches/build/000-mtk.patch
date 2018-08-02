@@ -1,0 +1,15 @@
+Index: backports-v4.18-rc7/drivers/net/wireless/mediatek/mt7601u/mcu.c
+===================================================================
+--- backports-v4.18-rc7.orig/drivers/net/wireless/mediatek/mt7601u/mcu.c
++++ backports-v4.18-rc7/drivers/net/wireless/mediatek/mt7601u/mcu.c
+@@ -419,8 +419,8 @@ static int mt7601u_load_firmware(struct
+ 	mt7601u_wr(dev, MT_USB_DMA_CFG, (MT_USB_DMA_CFG_RX_BULK_EN |
+ 					 MT_USB_DMA_CFG_TX_BULK_EN));
+ 
+-	if (firmware_running(dev))
+-		return firmware_request_cache(dev->dev, MT7601U_FIRMWARE);
++//	if (firmware_running(dev))
++//		return firmware_request_cache(dev->dev, MT7601U_FIRMWARE);
+ 
+ 	ret = request_firmware(&fw, MT7601U_FIRMWARE, dev->dev);
+ 	if (ret)

@@ -1,0 +1,39 @@
+Index: backports-v4.18-rc7/drivers/net/wireless/broadcom/brcm80211/brcmfmac/pcie.c
+===================================================================
+--- backports-v4.18-rc7.orig/drivers/net/wireless/broadcom/brcm80211/brcmfmac/pcie.c
++++ backports-v4.18-rc7/drivers/net/wireless/broadcom/brcm80211/brcmfmac/pcie.c
+@@ -2049,7 +2049,7 @@ static struct pci_driver brcmf_pciedrvr
+ #ifdef CONFIG_PM
+ 	.driver.pm = &brcmf_pciedrvr_pm,
+ #endif
+-	.driver.coredump = brcmf_dev_coredump,
++//	.driver.coredump = brcmf_dev_coredump,
+ };
+ 
+ 
+Index: backports-v4.18-rc7/drivers/net/wireless/marvell/mwifiex/sdio.c
+===================================================================
+--- backports-v4.18-rc7.orig/drivers/net/wireless/marvell/mwifiex/sdio.c
++++ backports-v4.18-rc7/drivers/net/wireless/marvell/mwifiex/sdio.c
+@@ -526,7 +526,7 @@ static struct sdio_driver mwifiex_sdio =
+ 	.remove = mwifiex_sdio_remove,
+ 	.drv = {
+ 		.owner = THIS_MODULE,
+-		.coredump = mwifiex_sdio_coredump,
++		//.coredump = mwifiex_sdio_coredump,
+ 		.pm = &mwifiex_sdio_pm_ops,
+ 	}
+ };
+Index: backports-v4.18-rc7/drivers/net/wireless/marvell/mwifiex/pcie.c
+===================================================================
+--- backports-v4.18-rc7.orig/drivers/net/wireless/marvell/mwifiex/pcie.c
++++ backports-v4.18-rc7/drivers/net/wireless/marvell/mwifiex/pcie.c
+@@ -447,7 +447,7 @@ static struct pci_driver __refdata mwifi
+ 	.probe    = mwifiex_pcie_probe,
+ 	.remove   = mwifiex_pcie_remove,
+ 	.driver   = {
+-		.coredump = mwifiex_pcie_coredump,
++		//.coredump = mwifiex_pcie_coredump,
+ #ifdef CONFIG_PM_SLEEP
+ 		.pm = &mwifiex_pcie_pm_ops,
+ #endif
