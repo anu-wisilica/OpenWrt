@@ -15,7 +15,7 @@
 #include <linux/pci.h>
 #include <linux/phy.h>
 #include <linux/mtd/mtd.h>
-#include <linux/mtd/nand.h>
+#include <linux/mtd/rawnand.h>
 #include <linux/mtd/partitions.h>
 #include <linux/mtd/physmap.h>
 #include <linux/platform_device.h>
@@ -115,7 +115,7 @@ static struct ar8327_platform_data c60_ar8327_data = {
 static struct mdio_board_info c60_mdio0_info[] = {
 	{
 		.bus_id = "ag71xx-mdio.0",
-		.phy_addr = 0,
+		.mdio_addr = 0,
 		.platform_data = &c60_ar8327_data,
 	},
 };

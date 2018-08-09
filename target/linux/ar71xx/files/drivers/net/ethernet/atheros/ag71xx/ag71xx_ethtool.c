@@ -22,7 +22,7 @@ static int ag71xx_ethtool_get_settings(struct net_device *dev,
 	if (!phydev)
 		return -ENODEV;
 
-	return phy_ethtool_gset(phydev, cmd);
+	return phy_ethtool_ioctl(phydev, cmd);
 }
 
 static int ag71xx_ethtool_set_settings(struct net_device *dev,
@@ -34,7 +34,7 @@ static int ag71xx_ethtool_set_settings(struct net_device *dev,
 	if (!phydev)
 		return -ENODEV;
 
-	return phy_ethtool_sset(phydev, cmd);
+	return phy_ethtool_ioctl(phydev, cmd);
 }
 
 static void ag71xx_ethtool_get_drvinfo(struct net_device *dev,

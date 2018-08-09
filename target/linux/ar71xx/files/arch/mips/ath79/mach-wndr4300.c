@@ -16,7 +16,7 @@
 #include <linux/ath9k_platform.h>
 #include <linux/ar8216_platform.h>
 #include <linux/mtd/mtd.h>
-#include <linux/mtd/nand.h>
+#include <linux/mtd/rawnand.h>
 #include <linux/platform/ar934x_nfc.h>
 
 #include <asm/mach-ath79/ar71xx_regs.h>
@@ -158,7 +158,7 @@ static struct ar8327_platform_data wndr4300_ar8327_data = {
 static struct mdio_board_info wndr4300_mdio0_info[] = {
 	{
 		.bus_id = "ag71xx-mdio.0",
-		.phy_addr = 0,
+		.mdio_addr = 0,
 		.platform_data = &wndr4300_ar8327_data,
 	},
 };

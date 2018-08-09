@@ -18,7 +18,7 @@
 #include <linux/ath9k_platform.h>
 #include <linux/ar8216_platform.h>
 #include <linux/mtd/mtd.h>
-#include <linux/mtd/nand.h>
+#include <linux/mtd/rawnand.h>
 #include <linux/mtd/partitions.h>
 #include <linux/spi/spi.h>
 #include <linux/spi/flash.h>
@@ -114,7 +114,7 @@ static struct ar8327_platform_data rb95x_ar8327_data = {
 static struct mdio_board_info rb95x_mdio0_info[] = {
 	{
 		.bus_id = "ag71xx-mdio.0",
-		.phy_addr = 0,
+		.mdio_addr = 0,
 		.platform_data = &rb95x_ar8327_data,
 	},
 };

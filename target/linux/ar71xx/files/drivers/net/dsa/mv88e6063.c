@@ -182,7 +182,7 @@ static int mv88e6063_setup_port(struct dsa_switch *ds, int p)
 #else
 				ds->enabled_port_mask :
 #endif
-				(1 << ds->dst->cpu_port)));
+				(1 << ds->dst->cpu_dp->index)));
 
 	/*
 	 * Port Association Vector: when learning source addresses
@@ -275,15 +275,19 @@ static struct dsa_switch_ops mv88e6063_switch_ops = {
 	.phy_write	= mv88e6063_phy_write,
 };
 
+static struct dsa_switch_driver mv88e6063_switch_drv = {
+	.ops		= &mv88e6063_switch_ops,
+};
+
 static int __init mv88e6063_init(void)
 {
-	register_switch_driver(&mv88e6063_switch_ops);
+	register_switch_driver(&mv88e6063_switch_drv);
 	return 0;
 }
 module_init(mv88e6063_init);
 
 static void __exit mv88e6063_cleanup(void)
 {
-	unregister_switch_driver(&mv88e6063_switch_ops);
+	unregister_switch_driver(&mv88e6063_switch_drv);
 }
 module_exit(mv88e6063_cleanup);

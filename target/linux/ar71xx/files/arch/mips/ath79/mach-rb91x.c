@@ -15,7 +15,7 @@
 #include <linux/platform_device.h>
 #include <linux/ath9k_platform.h>
 #include <linux/mtd/mtd.h>
-#include <linux/mtd/nand.h>
+#include <linux/mtd/rawnand.h>
 #include <linux/mtd/partitions.h>
 #include <linux/spi/spi.h>
 #include <linux/spi/74x164.h>
@@ -227,7 +227,7 @@ static struct at803x_platform_data rb91x_at803x_data = {
 static struct mdio_board_info rb91x_mdio0_info[] = {
 	{
 		.bus_id = "ag71xx-mdio.0",
-		.phy_addr = 0,
+		.mdio_addr = 0,
 		.platform_data = &rb91x_at803x_data,
 	},
 };
