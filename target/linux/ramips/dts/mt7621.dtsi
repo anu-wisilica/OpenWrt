@@ -60,7 +60,7 @@
 		#size-cells = <1>;
 
 		sysc: sysc@0 {
-			compatible = "mtk,mt7621-sysc";
+			compatible = "mtk,mt7621-sysc", "syscon";
 			reg = <0x0 0x100>;
 		};
 
@@ -408,7 +408,7 @@
 	};
 
 	ethernet: ethernet@1e100000 {
-		compatible = "mediatek,mt7621-eth";
+		compatible = "mediatek,mt7621-eth", "syscon";
 		reg = <0x1e100000 0x10000>;
 
 		#address-cells = <1>;
@@ -421,6 +421,7 @@
 		interrupts = <GIC_SHARED 3 IRQ_TYPE_LEVEL_HIGH>;
 
 		mediatek,switch = <&gsw>;
+		mediatek,ethsys = <&sysc>;
 
 		mdio-bus {
 			#address-cells = <1>;
