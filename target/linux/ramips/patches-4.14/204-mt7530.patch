@@ -1,0 +1,40 @@
+Index: linux-4.14.61/drivers/net/dsa/mt7530.c
+===================================================================
+--- linux-4.14.61.orig/drivers/net/dsa/mt7530.c
++++ linux-4.14.61/drivers/net/dsa/mt7530.c
+@@ -994,6 +994,8 @@ mt7530_setup(struct dsa_switch *ds)
+ 	val = mt7530_read(priv, MT7530_MHWTRAP);
+ 	val &= ~MHWTRAP_P6_DIS & ~MHWTRAP_PHY_ACCESS;
+ 	val |= MHWTRAP_MANUAL;
++	val |= MHWTRAP_P5_MAC_SEL;
++	val |= MHWTRAP_P5_RGMII_MODE;
+ 	mt7530_write(priv, MT7530_MHWTRAP, val);
+ 
+ 	/* Enable and reset MIB counters */
+@@ -1011,6 +1013,25 @@ mt7530_setup(struct dsa_switch *ds)
+ 		else
+ 			mt7530_port_disable(ds, i, NULL);
+ 	}
++#ifdef SOC_MT7621
++
++	dev_info(priv->dev, "P5 enabled.\n");
++
++	/* (P5, link OFF) */
++	mt7530_write(priv, MT7530_PMCR_P(5), PMCR_COMMON_LINK);
++
++	/* P5 RGMII TX Clock Control, delay 0 */
++	mt7530_write(priv, MT7530_P5RGMIITXCR, CSR_RGMII_TXC_CFG(0x10));
++
++	/* reduce P5 RGMII Tx driving, 8mA*/
++	val = P5_IO_CLK_DRV(1);
++	val |= P5_IO_DATA_DRV(1);
++	mt7530_write(priv, MT7530_IO_DRV_CR, val);
++
++	/* P5 RGMII RX Clock Control: delay setting for 1000M */
++	val = CSR_RGMII_EDGE_ALIGN | CSR_RGMII_RXC_0DEG_CFG(2);
++	mt7530_write(priv, MT7530_P5RGMIIRXCR, val);
++#endif
+ 
+ 	/* Flush the FDB table */
+ 	ret = mt7530_fdb_cmd(priv, MT7530_FDB_FLUSH, 0);
+

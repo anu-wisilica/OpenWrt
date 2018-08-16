@@ -17,6 +17,8 @@
 
 	gpio-keys-polled {
 		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
 		poll-interval = <20>;
 
 		reset {
@@ -25,88 +27,199 @@
 			linux,code = <KEY_RESTART>;
 		};
 	};
+
+	reg_core: regulator@0 {
+		reg = <0>;
+		regulator-name = "Core";
+		regulator-min-microvolt = < 500000>;
+		regulator-max-microvolt = <3650000>;
+		regulator-boot-on;
+	};
+
+	reg_io: regulator@1 {
+		reg = <1>;
+		regulator-name = "io";
+		regulator-min-microvolt = <3000000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-boot-on;
+	};
+
+	mt7530: switch@0 {
+		compatible = "mediatek,mt7530";
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
 };
 
-&ethernet {
-	mtd-mac-address = <&factory 0x22>;
+&gdma {
+	status = "okay";
+};
+
+&hsdma {
+	status = "okay";
+};
+
+&eth {
+	status = "okay";
+
+	gmac0: mac@0 {
+		compatible = "mediatek,eth-mac";
+		mtd-mac-address = <&factory 0x22>;
+		reg = <0>;
+		phy-mode = "rgmii";
+
+		fixed-link {
+			speed = <1000>;
+			full-duplex;
+			pause;
+		};
+	};
+
+
+	mdio: mdio-bus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		ephy5: ethernet-phy@7 {
+			reg = <7>;
+			phy-mode = "rgmii-rxid";
+		};
+	};
+};
+
+&mt7530 {
+	compatible = "mediatek,mt7530";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	reg = <0>;
+	pinctrl-names = "default";
+	mediatek,mcm;
+	resets = <&rstctrl 2>;
+	reset-names = "mcm";
+	core-supply = <&reg_core>;
+	io-supply = <&reg_io>;
+
+	dsa,mii-bus = <&mdio>;
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0>;
+
+		port@0 {
+			reg = <0>;
+			label = "lan0";
+			cpu = <&cpu_port0>;
+		};
+
+		port@1 {
+			reg = <1>;
+			label = "lan1";
+			cpu = <&cpu_port0>;
+		};
+
+		port@2 {
+			reg = <2>;
+			label = "lan2";
+			cpu = <&cpu_port0>;
+		};
+
+		port@3 {
+			reg = <3>;
+			label = "lan3";
+			cpu = <&cpu_port0>;
+		};
+
+		port@4 {
+			reg = <4>;
+			label = "lan4";
+			cpu = <&cpu_port0>;
+		};
+
+		lan5: port@5 {
+			reg = <5>;
+			label = "lan5";
+			cpu = <&cpu_port0>;
+			phy-handle = <&ephy5>;
+		};
+
+		cpu_port0: port@6 {
+			reg = <6>;
+			label = "cpu";
+			ethernet = <&gmac0>;
+			phy-mode = "rgmii";
+
+			fixed-link {
+				speed = <1000>;
+				full-duplex;
+			};
+		};
+	};
 };
 
 &nand {
 	status = "okay";
 
-	partitions {
-		compatible = "fixed-partitions";
-		#address-cells = <1>;
-		#size-cells = <1>;
+	partition@0 {
+		label = "u-boot";
+		reg = <0x0 0x80000>;
+		read-only;
+	};
 
-		partition@0 {
-			label = "u-boot";
-			reg = <0x0 0x80000>;
-			read-only;
-		};
+	partition@80000 {
+		label = "u-boot-env";
+		reg = <0x80000 0x60000>;
+		read-only;
+	};
 
-		partition@80000 {
-			label = "u-boot-env";
-			reg = <0x80000 0x60000>;
-			read-only;
-		};
+	factory: partition@e0000 {
+		label = "factory";
+		reg = <0xe0000 0x60000>;
+	};
 
-		factory: partition@e0000 {
-			label = "factory";
-			reg = <0xe0000 0x60000>;
-		};
+	partition@140000 {
+		label = "kernel1";
+		reg = <0x140000 0x300000>;
+	};
 
-		partition@140000 {
-			label = "kernel1";
-			reg = <0x140000 0x300000>;
-		};
+	partition@440000 {
+		label = "kernel2";
+		reg = <0x440000 0x300000>;
+	};
 
-		partition@440000 {
-			label = "kernel2";
-			reg = <0x440000 0x300000>;
-		};
-
-		partition@740000 {
-			label = "ubi";
-			reg = <0x740000 0xf7c0000>;
-		};
+	partition@740000 {
+		label = "ubi";
+		reg = <0x740000 0xf7c0000>;
 	};
 };
 
 &pinctrl {
 	state_default: pinctrl0 {
 		gpio {
-			ralink,group = "uart2", "uart3", "i2c", "pcie", "rgmii2", "jtag";
+			ralink,group = "uart2", "uart3", "pcie", "i2c", "jtag";
 			ralink,function = "gpio";
 		};
 	};
 };
 
 &spi0 {
-	/*
-	 * This board has 2Mb spi flash soldered in and visible
-	 * from manufacturer's firmware.
-	 * But this SoC shares spi and nand pins,
-	 * and current driver doesn't handle this sharing well
-	 */
+	/* This board has 2Mb spi flash soldered in and visible
+	   from manufacturer's firmware.
+	   But this SoC shares spi and nand pins,
+	   and current driver does't handle this sharing well */
 	status = "disabled";
 
 	m25p80@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
 		compatible = "jedec,spi-nor";
 		reg = <1>;
 		spi-max-frequency = <10000000>;
 		m25p,chunked-io = <32>;
 
-		partitions {
-			compatible = "fixed-partitions";
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			partition@0 {
-				label = "spi";
-				reg = <0x0 0x200000>;
-				read-only;
-			};
+		partition@0 {
+			label = "spi";
+			reg = <0x0 0x200000>;
+			read-only;
 		};
 	};
 };

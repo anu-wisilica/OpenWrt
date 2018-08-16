@@ -1,0 +1,162 @@
+Index: linux-4.14.61/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+===================================================================
+--- linux-4.14.61.orig/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ linux-4.14.61/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -23,6 +23,7 @@
+ #include <linux/reset.h>
+ #include <linux/tcp.h>
+ #include <linux/interrupt.h>
++#include <linux/pinctrl/devinfo.h>
+ 
+ #include "mtk_eth_soc.h"
+ 
+@@ -1817,7 +1818,7 @@ static int mtk_open(struct net_device *d
+ 	struct mtk_eth *eth = mac->hw;
+ 
+ 	/* we run 2 netdevs on the same dma ring so we only bring it up once */
+-	if (!atomic_read(&eth->dma_refcnt)) {
++	if (!refcount_read(&eth->dma_refcnt)) {
+ 		int err = mtk_start_dma(eth);
+ 
+ 		if (err)
+@@ -1827,8 +1828,10 @@ static int mtk_open(struct net_device *d
+ 		napi_enable(&eth->rx_napi);
+ 		mtk_tx_irq_enable(eth, MTK_TX_DONE_INT);
+ 		mtk_rx_irq_enable(eth, MTK_RX_DONE_INT);
++		refcount_set(&eth->dma_refcnt, 1);
+ 	}
+-	atomic_inc(&eth->dma_refcnt);
++	else
++		refcount_inc(&eth->dma_refcnt);
+ 
+ 	phy_start(dev->phydev);
+ 	netif_start_queue(dev);
+@@ -1868,7 +1871,7 @@ static int mtk_stop(struct net_device *d
+ 	phy_stop(dev->phydev);
+ 
+ 	/* only shutdown DMA if this is the last user */
+-	if (!atomic_dec_and_test(&eth->dma_refcnt))
++	if (!refcount_dec_and_test(&eth->dma_refcnt))
+ 		return 0;
+ 
+ 	mtk_tx_irq_disable(eth, MTK_TX_DONE_INT);
+@@ -1950,14 +1953,16 @@ static int mtk_hw_init(struct mtk_eth *e
+ 	}
+ 	regmap_write(eth->ethsys, ETHSYS_SYSCFG0, val);
+ 
+-	/* Set GE2 driving and slew rate */
+-	regmap_write(eth->pctl, GPIO_DRV_SEL10, 0xa00);
++	if (eth->pctl) {
++		/* Set GE2 driving and slew rate */
++		regmap_write(eth->pctl, GPIO_DRV_SEL10, 0xa00);
+ 
+-	/* set GE2 TDSEL */
+-	regmap_write(eth->pctl, GPIO_OD33_CTRL8, 0x5);
++		/* set GE2 TDSEL */
++		regmap_write(eth->pctl, GPIO_OD33_CTRL8, 0x5);
+ 
+-	/* set GE2 TUNE */
+-	regmap_write(eth->pctl, GPIO_BIAS_CTRL, 0x0);
++		/* set GE2 TUNE */
++		regmap_write(eth->pctl, GPIO_BIAS_CTRL, 0x0);
++	}
+ 
+ 	/* Set linkdown as the default for each GMAC. Its own MCR would be set
+ 	 * up with the more appropriate value when mtk_phy_link_adjust call is
+@@ -2498,7 +2503,6 @@ static int mtk_probe(struct platform_dev
+ {
+ 	struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+ 	struct device_node *mac_np;
+-	const struct of_device_id *match;
+ 	struct mtk_eth *eth;
+ 	int err;
+ 	int i;
+@@ -2507,8 +2511,7 @@ static int mtk_probe(struct platform_dev
+ 	if (!eth)
+ 		return -ENOMEM;
+ 
+-	match = of_match_device(of_mtk_match, &pdev->dev);
+-	eth->soc = (struct mtk_soc_data *)match->data;
++	eth->soc = of_device_get_match_data(&pdev->dev);
+ 
+ 	eth->dev = &pdev->dev;
+ 	eth->base = devm_ioremap_resource(&pdev->dev, res);
+@@ -2536,11 +2539,13 @@ static int mtk_probe(struct platform_dev
+ 		}
+ 	}
+ 
+-	eth->pctl = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
+-						    "mediatek,pctl");
+-	if (IS_ERR(eth->pctl)) {
+-		dev_err(&pdev->dev, "no pctl regmap found\n");
+-		return PTR_ERR(eth->pctl);
++	if (eth->soc->required_pctl) {
++		eth->pctl = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
++							    "mediatek,pctl");
++		if (IS_ERR(eth->pctl)) {
++			dev_err(&pdev->dev, "no pctl regmap found\n");
++			return PTR_ERR(eth->pctl);
++		}
+ 	}
+ 
+ 	for (i = 0; i < 3; i++) {
+@@ -2666,17 +2671,20 @@ static int mtk_remove(struct platform_de
+ 
+ static const struct mtk_soc_data mt2701_data = {
+ 	.caps = MTK_GMAC1_TRGMII,
+-	.required_clks = MT7623_CLKS_BITMAP
++	.required_clks = MT7623_CLKS_BITMAP,
++	.required_pctl = true,
+ };
+ 
+ static const struct mtk_soc_data mt7622_data = {
+ 	.caps = MTK_DUAL_GMAC_SHARED_SGMII | MTK_GMAC1_ESW,
+-	.required_clks = MT7622_CLKS_BITMAP
++	.required_clks = MT7622_CLKS_BITMAP,
++	.required_pctl = false,
+ };
+ 
+ static const struct mtk_soc_data mt7623_data = {
+ 	.caps = MTK_GMAC1_TRGMII,
+-	.required_clks = MT7623_CLKS_BITMAP
++	.required_clks = MT7623_CLKS_BITMAP,
++	.required_pctl = true,
+ };
+ 
+ const struct of_device_id of_mtk_match[] = {
+Index: linux-4.14.61/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+===================================================================
+--- linux-4.14.61.orig/drivers/net/ethernet/mediatek/mtk_eth_soc.h
++++ linux-4.14.61/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+@@ -15,6 +15,8 @@
+ #ifndef MTK_ETH_H
+ #define MTK_ETH_H
+ 
++#include <linux/refcount.h>
++
+ #define MTK_QDMA_PAGE_SIZE	2048
+ #define	MTK_MAX_RX_LENGTH	1536
+ #define MTK_TX_DMA_BUF_LEN	0x3fff
+@@ -571,10 +573,13 @@ struct mtk_rx_ring {
+  * @caps			Flags shown the extra capability for the SoC
+  * @required_clks		Flags shown the bitmap for required clocks on
+  *				the target SoC
++ * @required_pctl		A bool value to show whether the SoC requires
++ *				the extra setup for those pins used by GMAC.
+  */
+ struct mtk_soc_data {
+ 	u32		caps;
+ 	u32		required_clks;
++	bool		required_pctl;
+ };
+ 
+ /* currently no SoC has more than 2 macs */
+@@ -632,7 +637,7 @@ struct mtk_eth {
+ 	struct regmap			*pctl;
+ 	u32				chip_id;
+ 	bool				hwlro;
+-	atomic_t			dma_refcnt;
++	refcount_t			dma_refcnt;
+ 	struct mtk_tx_ring		tx_ring;
+ 	struct mtk_rx_ring		rx_ring[MTK_MAX_RX_RING_NUM];
+ 	struct mtk_rx_ring		rx_ring_qdma;

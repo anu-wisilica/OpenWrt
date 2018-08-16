@@ -213,8 +213,6 @@ ramips_setup_interfaces()
 	tl-wr840n-v5|\
 	tl-wr841n-v13|\
 	u7628-01-128M-16M|\
-	ubnt-erx|\
-	ubnt-erx-sfp|\
 	ur-326n4g|\
 	wrtnode|\
 	wrtnode2p | \
@@ -349,6 +347,10 @@ ramips_setup_interfaces()
 	tplink,tl-wr902ac-v3)
 		ucidef_add_switch "switch0" \
 			"4:lan" "6@eth0"
+		;;
+	ubnt-erx|\
+	ubnt-erx-sfp)
+		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4 lan5" "lan0"
 		;;
 	vonets,var11n-300|\
 	wt1520-4M|\

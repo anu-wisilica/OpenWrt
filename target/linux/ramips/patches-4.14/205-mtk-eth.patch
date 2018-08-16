@@ -1,0 +1,137 @@
+Index: linux-4.14.61/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+===================================================================
+--- linux-4.14.61.orig/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ linux-4.14.61/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -370,8 +370,9 @@ static int mtk_phy_connect(struct net_de
+ 		dev->phydev->supported |=
+ 		SUPPORTED_Pause | SUPPORTED_Asym_Pause;
+ 
++	/* FIXME: Get external phy info??? */
+ 	dev->phydev->supported &= PHY_GBIT_FEATURES | SUPPORTED_Pause |
+-				   SUPPORTED_Asym_Pause;
++				   SUPPORTED_Asym_Pause | SUPPORTED_FIBRE;
+ 	dev->phydev->advertising = dev->phydev->supported |
+ 				    ADVERTISED_Autoneg;
+ 	phy_start_aneg(dev->phydev);
+@@ -1020,6 +1021,7 @@ static int mtk_poll_rx(struct napi_struc
+ 		new_data = napi_alloc_frag(ring->frag_size);
+ 		if (unlikely(!new_data)) {
+ 			netdev->stats.rx_dropped++;
++			printk("drop data %d\n", mac);
+ 			goto release_desc;
+ 		}
+ 		dma_addr = dma_map_single(eth->dev,
+@@ -1029,6 +1031,7 @@ static int mtk_poll_rx(struct napi_struc
+ 		if (unlikely(dma_mapping_error(eth->dev, dma_addr))) {
+ 			skb_free_frag(new_data);
+ 			netdev->stats.rx_dropped++;
++			printk("DMA ERR data %d\n", mac);
+ 			goto release_desc;
+ 		}
+ 
+@@ -1984,6 +1987,7 @@ static int mtk_hw_init(struct mtk_eth *e
+ 	for (i = 0; i < MTK_MAC_COUNT; i++) {
+ 		if (!eth->mac[i])
+ 			continue;
++		printk("MT7621: MAC%d MODE %x, id: %x\n", i, eth->mac[i]->ge_mode, eth->mac[i]->id);
+ 		val &= ~SYSCFG0_GE_MODE(SYSCFG0_GE_MASK, eth->mac[i]->id);
+ 		val |= SYSCFG0_GE_MODE(eth->mac[i]->ge_mode, eth->mac[i]->id);
+ 	}
+@@ -1998,17 +2002,26 @@ static int mtk_hw_init(struct mtk_eth *e
+ 
+ 	/* reduce RGMII1 PAD driving strength */
+ 	regmap_read(eth->ethsys, SYSC_PAD_RGMII2_MDIO, &val);
+-	// MDIO
++	// MDIO driving 2mA
+ 	val &= ~(3 << 4);
+-	// RGMII2, 12mA
+-	val &= ~(3 <<20); 
+-	val |= (2 << 20); 
+-	regmap_write(eth->ethsys, SYSC_PAD_RGMII2_MDIO, val);
+ 
+-	/* gpio mux - RGMII1&RGMII2=Normal mode, set GMAC1,2 RGMII mode  */
++	if (eth->mac[1]) {
++		// When 2nd MAC is enabled set pin strength.
++		// RGMII2, 12mA
++		val &= ~(3 <<20);
++		val |= (2 << 20);
++		regmap_write(eth->ethsys, SYSC_PAD_RGMII2_MDIO, val);
++	};
++
++	/* set GMAC1,2 RGMII mode  */
+ 	regmap_read(eth->ethsys, SYSC_GPIO_MODE, &val);
+-	val &= ~(BIT(14) | BIT(15) | 3 << 12 | 3 << 14);
++	val &= ~(3<<12); // MDIO_MODE = MDIO
++		val &= ~(BIT(15) | BIT(14)); // RGMIIx GPIO MODE = RGMIIx
++	if (!eth->mac[1])
++		val |= BIT(15);
+ 	regmap_write(eth->ethsys, SYSC_GPIO_MODE, val);
++
++
+ #else
+ 	if (eth->pctl) {
+ 		/* Set GE2 driving and slew rate */
+@@ -2055,7 +2068,7 @@ static int mtk_hw_init(struct mtk_eth *e
+ 	mtk_w32(eth, MTK_RX_DONE_INT, MTK_QDMA_INT_GRP2);
+ 	mtk_w32(eth, 0x21021000, MTK_FE_INT_GRP);
+ 
+-	for (i = 0; i < 2; i++) {
++	for (i = 0; i < MTK_MAC_COUNT; i++) {
+ 		u32 val = mtk_r32(eth, MTK_GDMA_FWD_CFG(i));
+ 
+ 		/* setup the forward port to send frame to PDMA */
+@@ -2064,6 +2077,8 @@ static int mtk_hw_init(struct mtk_eth *e
+ 		/* Enable RX checksum */
+ 		val |= MTK_GDMA_ICS_EN | MTK_GDMA_TCS_EN | MTK_GDMA_UCS_EN;
+ 
++		printk("MTK_GDMA_FWD_CFG: %d, %u\n", i, val);
++
+ 		/* setup the mac dma */
+ 		mtk_w32(eth, val, MTK_GDMA_FWD_CFG(i));
+ 	}
+@@ -2183,6 +2198,8 @@ static void mtk_pending_work(struct work
+ 	for (i = 0; i < MTK_MAC_COUNT; i++) {
+ 		if (!test_bit(i, &restart))
+ 			continue;
++		else
++			printk("MT7621: restart DMA and enable IRQs: No MAC!\n");
+ 		err = mtk_open(eth->netdev[i]);
+ 		if (err) {
+ 			netif_alert(eth, ifup, eth->netdev[i],
+@@ -2454,6 +2471,8 @@ static int mtk_add_mac(struct mtk_eth *e
+ 	struct mtk_mac *mac;
+ 	const __be32 *_id = of_get_property(np, "reg", NULL);
+ 	int id, err;
++	
++	dev_err(eth->dev, "mtk_add_mac\n");
+ 
+ 	if (!_id) {
+ 		dev_err(eth->dev, "missing mac id\n");
+@@ -2477,6 +2496,10 @@ static int mtk_add_mac(struct mtk_eth *e
+ 		return -ENOMEM;
+ 	}
+ 	mac = netdev_priv(eth->netdev[id]);
++	if (!mac) {
++		dev_err(eth->dev, "netdev_priv mac failed\n");
++		//return -ENOMEM;
++	}
+ 	eth->mac[id] = mac;
+ 	mac->id = id;
+ 	mac->hw = eth;
+@@ -2514,6 +2537,8 @@ static int mtk_add_mac(struct mtk_eth *e
+ 	eth->netdev[id]->irq = eth->irq[0];
+ 	eth->netdev[id]->dev.of_node = np;
+ 
++	dev_err(eth->dev, "mtk_add_mac done\n");
++
+ 	return 0;
+ 
+ free_netdev:
+@@ -2549,6 +2574,7 @@ static int mtk_get_chip_id(struct mtk_et
+ static bool mtk_is_hwlro_supported(struct mtk_eth *eth)
+ {
+ 	switch (eth->chip_id) {
++	case MT7621_ETH:
+ 	case MT7622_ETH:
+ 	case MT7623_ETH:
+ 		return true;
