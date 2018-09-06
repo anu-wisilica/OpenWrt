@@ -60,7 +60,7 @@ mtk_foe_prepare_v4(struct mtk_foe_entry *entry,
 	entry->ipv4_hnapt.iblk2.dscp = 0;
 	entry->ipv4_hnapt.iblk2.port_mg = 0x3f;
 	entry->ipv4_hnapt.iblk2.port_ag = 0x1f;
-#ifdef CONFIG_NET_MEDIATEK_HW_QOS
+#ifdef CONFIG_NET_RALINK_HW_QOS
 	entry->ipv4_hnapt.iblk2.qid = 1;
 	entry->ipv4_hnapt.iblk2.fqos = 1;
 #endif
@@ -188,7 +188,7 @@ write:
 	return 0;
 }
 
-#ifdef CONFIG_NET_MEDIATEK_HW_QOS
+#ifdef CONFIG_NET_RALINK_HW_QOS
 
 #define QDMA_TX_SCH_TX	  0x1a14
 
@@ -379,7 +379,7 @@ static int mtk_ppe_start(struct mtk_eth *eth)
 
 	dev_info(eth->dev, "PPE started\n");
 
-#ifdef CONFIG_NET_MEDIATEK_HW_QOS
+#ifdef CONFIG_NET_RALINK_HW_QOS
 	mtk_ppe_scheduler(eth, 0, 500000);
 	mtk_ppe_scheduler(eth, 1, 500000);
 	mtk_ppe_queue(eth, 0, 0, 7, 32, 250000, 0);

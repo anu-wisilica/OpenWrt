@@ -933,14 +933,14 @@ static int fe_poll_rx(struct napi_struct *napi, int budget,
 			skb_checksum_none_assert(skb);
 		skb->protocol = eth_type_trans(skb, netdev);
 
-#ifdef CONFIG_NET_MEDIATEK_OFFLOAD
+#ifdef CONFIG_NET_RALINK_OFFLOAD
 		if (mtk_offload_check_rx(priv, skb, trxd.rxd4) == 0) {
 #endif
 			stats->rx_packets++;
 			stats->rx_bytes += pktlen;
 
 			napi_gro_receive(napi, skb);
-#ifdef CONFIG_NET_MEDIATEK_OFFLOAD
+#ifdef CONFIG_NET_RALINK_OFFLOAD
 		} else {
 			dev_kfree_skb(skb);
 		}
@@ -1282,7 +1282,7 @@ static int fe_open(struct net_device *dev)
 	napi_enable(&priv->rx_napi);
 	fe_int_enable(priv->soc->tx_int | priv->soc->rx_int);
 	netif_start_queue(dev);
-#ifdef CONFIG_NET_MEDIATEK_OFFLOAD
+#ifdef CONFIG_NET_RALINK_OFFLOAD
 	mtk_ppe_probe(priv);
 #endif
 
@@ -1321,7 +1321,7 @@ static int fe_stop(struct net_device *dev)
 
 	fe_free_dma(priv);
 
-#ifdef CONFIG_NET_MEDIATEK_OFFLOAD
+#ifdef CONFIG_NET_RALINK_OFFLOAD
 	mtk_ppe_remove(priv);
 #endif
 
@@ -1465,7 +1465,7 @@ static int fe_change_mtu(struct net_device *dev, int new_mtu)
 	return fe_open(dev);
 }
 
-#ifdef CONFIG_NET_MEDIATEK_OFFLOAD
+#ifdef CONFIG_NET_RALINK_OFFLOAD
 static int
 fe_flow_offload(enum flow_offload_type type, struct flow_offload *flow,
 		struct flow_offload_hw_path *src,
@@ -1499,7 +1499,7 @@ static const struct net_device_ops fe_netdev_ops = {
 #ifdef CONFIG_NET_POLL_CONTROLLER
 	.ndo_poll_controller	= fe_poll_controller,
 #endif
-#ifdef CONFIG_NET_MEDIATEK_OFFLOAD
+#ifdef CONFIG_NET_RALINK_OFFLOAD
 	.ndo_flow_offload	= fe_flow_offload,
 #endif
 };
