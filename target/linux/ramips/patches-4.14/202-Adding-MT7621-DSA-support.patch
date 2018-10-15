@@ -198,42 +198,6 @@ Index: linux-4.14.61/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	mtk_tx_irq_enable(eth, MTK_TX_DONE_INT);
  	mtk_rx_irq_enable(eth, MTK_RX_DONE_INT);
  }
-@@ -1953,6 +1989,27 @@ static int mtk_hw_init(struct mtk_eth *e
- 	}
- 	regmap_write(eth->ethsys, ETHSYS_SYSCFG0, val);
- 
-+#ifdef CONFIG_SOC_MT7621
-+
-+#define SYSC_PAD_RGMII2_MDIO	0x58
-+#define SYSC_GPIO_MODE	0x60
-+#define SYSC_REG_CFG1	0x14
-+	printk("MT7621: GE2: Pininit\n");
-+
-+	/* reduce RGMII1 PAD driving strength */
-+	regmap_read(eth->ethsys, SYSC_PAD_RGMII2_MDIO, &val);
-+	// MDIO
-+	val &= ~(3 << 4);
-+	// RGMII2, 12mA
-+	val &= ~(3 <<20); 
-+	val |= (2 << 20); 
-+	regmap_write(eth->ethsys, SYSC_PAD_RGMII2_MDIO, val);
-+
-+	/* gpio mux - RGMII1&RGMII2=Normal mode, set GMAC1,2 RGMII mode  */
-+	regmap_read(eth->ethsys, SYSC_GPIO_MODE, &val);
-+	val &= ~(BIT(14) | BIT(15) | 3 << 12 | 3 << 14);
-+	regmap_write(eth->ethsys, SYSC_GPIO_MODE, val);
-+#else
- 	if (eth->pctl) {
- 		/* Set GE2 driving and slew rate */
- 		regmap_write(eth->pctl, GPIO_DRV_SEL10, 0xa00);
-@@ -1963,6 +2020,7 @@ static int mtk_hw_init(struct mtk_eth *e
- 		/* set GE2 TUNE */
- 		regmap_write(eth->pctl, GPIO_BIAS_CTRL, 0x0);
- 	}
-+#endif
- 
- 	/* Set linkdown as the default for each GMAC. Its own MCR would be set
- 	 * up with the more appropriate value when mtk_phy_link_adjust call is
 @@ -2548,13 +2606,15 @@ static int mtk_probe(struct platform_dev
  		}
  	}
