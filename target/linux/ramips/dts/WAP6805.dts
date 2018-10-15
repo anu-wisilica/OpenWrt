@@ -54,15 +54,16 @@
 			gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;
 		};
 	};
+
+	mt7530: switch@0 {
+		compatible = "mediatek,mt7530";
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
 };
 
 &nand {
 	status = "okay";
-
-	partitions {
-		compatible = "fixed-partitions";
-		#address-cells = <1>;
-		#size-cells = <1>;
 
 		partition@0 {
 			label = "Bootloader";
@@ -111,7 +112,6 @@
 			label = "App";
 			reg = <0x5500000 0x2b00000>;
 		};
-	};
 };
 
 &pcie {
@@ -124,7 +124,8 @@
 
 };
 
-&ethernet {
+&eth {
+        status = "okay";
 	gmac0: mac@0 {
 		compatible = "mediatek,eth-mac";
 		reg = <0>;
@@ -148,12 +149,18 @@
 			pause;
 		};
 	};
+	mdio: mdio-bus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
 };
 
-&phy1f {
+&mt7530 {
 	compatible = "mediatek,mt7530";
 	#address-cells = <1>;
 	#size-cells = <0>;
+
+	dsa,mii-bus = <&mdio>;
 
 	ports {
 		#address-cells = <1>;

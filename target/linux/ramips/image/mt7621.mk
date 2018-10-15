@@ -528,7 +528,6 @@ define Device/wap6805
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
   DEVICE_TITLE := ZyXEL WAP6805
   DEVICE_PACKAGES := \
-	kmod-mtk-eth-soc \
 	kmod-mt7603 kmod-mt76x2 \
 	kmod-usb3 kmod-usb-ledtrig-usbport wpad-mini \
 	-swconfig
