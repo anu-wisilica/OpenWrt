@@ -545,6 +545,18 @@ endif
 
 ifeq ($(SUBTARGET),xrx200)
 
+# AR10
+
+define Device/dlink_dwr-956
+  $(Device/NAND)
+  BOARD_NAME := DWR956
+  DEVICE_DTS := DWR956
+  DEVICE_TITLE := D-Link DWR-956
+  DEVICE_PACKAGES := kmod-usb-dwc2 kmod-usb-ledtrig-usbport
+  SUPPORTED_DEVICES += DWR956
+endef
+TARGET_DEVICES += dlink_dwr-956
+
 # VR9
 
 define Device/zyxel_p-2812hnu-f1
