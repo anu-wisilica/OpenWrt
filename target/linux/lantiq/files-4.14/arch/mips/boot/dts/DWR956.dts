@@ -24,7 +24,7 @@
 		compatible = "lantiq,nand-xway";
 		lantiq,cs = <0>;
 		bank-width = <2>;
-		reg = <0 0x0 0x8000000>;
+		reg = <0 0x0 0x2000000>;
 		#address-cells = <1>;
 		#size-cells = <1>;
 
@@ -159,8 +159,15 @@
 			lantiq,open-drain = <0>;
 			lantiq,pull = <0>;
 		};
-		nand_cs1 {
-			lantiq,groups = "nand cs1";
+		nand {
+		        lantiq,groups = "nand cs1", "nand rdy",
+                                                "nand rd", "nand d1",
+                                                "nand d0", "nand d2",
+                                                "nand d7", "nand d6",
+                                                "nand d5", "nand d4",
+                                                "nand d3", "nand cs0",
+                                                "nand wr", "nand wp",
+                                                "nand se";
 			lantiq,function = "ebu";
 			lantiq,open-drain = <0>;
 			lantiq,pull = <0>;
