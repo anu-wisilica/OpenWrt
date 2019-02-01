@@ -109,11 +109,19 @@
 				reset-names = "gphy", "gphy2";
 			};
 
-			gphy1: gphy@68 {
+			gphy1: gphy@58 {
 				compatible = "lantiq,xrx300-gphy";
-				reg = <0x68 0x4>;
+				reg = <0x58 0x4>;
 
 				resets = <&reset0 29 28>, <&reset1 6 6>;
+				reset-names = "gphy", "gphy2";
+			};
+
+			gphy2: gphy@ac {
+				compatible = "lantiq,xrx300-gphy";
+				reg = <0xac 0x4>;
+
+				resets = <&reset0 27 26>, <&reset1 5 5>;
 				reset-names = "gphy", "gphy2";
 			};
 
@@ -295,23 +303,28 @@
 			interrupts = <75 73 72>;
 			resets = <&reset0 21 16>, <&reset0 8 8>;
 			reset-names = "switch", "ppe";
-			lantiq,phys = <&gphy0>, <&gphy1>;
-		};
-
-		mei@e116000 {
-			status = "disabled";
-			compatible = "lantiq,mei-xrx200";
-			reg = <0xe116000 0x9c>;
-			interrupt-parent = <&icu0>;
-			interrupts = <63>;
+			lantiq,phys = <&gphy0>, <&gphy1>, <&gphy2>;
 		};
 
 		ppe@e234000 {
-			status = "disabled";
-
 			compatible = "lantiq,ppe-xrx200";
 			interrupt-parent = <&icu0>;
 			interrupts = <96>;
+		};
+
+		pcie0: pcie@d900000 {
+			compatible = "lantiq,pcie-xrx200";
+
+			#interrupt-cells = <1>;
+			#size-cells = <2>;
+			#address-cells = <3>;
+
+			interrupt-parent = <&icu0>;
+			interrupts = <161 144>;
+
+			device_type = "pci";
+
+			gpio-reset = <&gpio 38 GPIO_ACTIVE_HIGH>;
 		};
 
 		pci0: pci@e105400 {

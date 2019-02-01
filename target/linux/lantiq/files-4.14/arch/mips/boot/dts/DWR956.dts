@@ -82,25 +82,9 @@
                        phy-mode = "rgmii";
                        phy-handle = <&phy0>;
                };
-               ethernet@1 {
-                       compatible = "lantiq,xrx200-pdi-port";
-                       reg = <1>;
-                       phy-mode = "rgmii";
-                       phy-handle = <&phy1>;
-               };
-               ethernet@2 {
-                       compatible = "lantiq,xrx200-pdi-port";
-                       reg = <2>;
-                       phy-mode = "gmii";
-                       phy-handle = <&phy11>;
-               };
-               ethernet@4 {
-                       compatible = "lantiq,xrx200-pdi-port";
-                       reg = <4>;
-                       phy-mode = "gmii";
-                       phy-handle = <&phy13>;
-               };
-       };
+
+         };
+
 
        mdio@0 {
                #address-cells = <1>;
@@ -112,19 +96,20 @@
                        reg = <0x0>;
                        compatible = "lantiq,phy11g", "ethernet-phy-ieee802.3-c22";
                };
-               phy1: ethernet-phy@1 {
-                       reg = <0x1>;
-                       compatible = "lantiq,phy11g", "ethernet-phy-ieee802.3-c22";
-               };
-               phy11: ethernet-phy@11 {
-                       reg = <0x11>;
-                       compatible = "lantiq,phy11g", "ethernet-phy-ieee802.3-c22";
-               };
-               phy13: ethernet-phy@13 {
-                       reg = <0x13>;
-                       compatible = "lantiq,phy11g", "ethernet-phy-ieee802.3-c22";
-               };
+
        };
+};
+
+&gphy0 {
+        lantiq,gphy-mode = <GPHY_MODE_GE>;
+};
+
+&gphy1 {
+        lantiq,gphy-mode = <GPHY_MODE_GE>;
+};
+
+&gphy2 {
+        lantiq,gphy-mode = <GPHY_MODE_GE>;
 };
 
 &gpio {
@@ -132,6 +117,13 @@
 	pinctrl-0 = <&state_default>;
 
 	state_default: pinmux {
+                stp {
+                        lantiq,groups = "stp";
+                        lantiq,function = "stp";
+                        lantiq,open-drain = <0>;
+                        lantiq,output = <1>;
+                        lantiq,pull = <0>;
+                };
                mdio {
                        lantiq,groups = "mdio";
                        lantiq,function = "mdio";
@@ -158,3 +150,16 @@
 	};
 };
 
+&pci0 {
+        status = "disabled";
+};
+
+&pcie0 {
+        status = "disabled";
+};
+
+&stp {
+        status = "ok";
+	lantiq,phy1 = <0x7>;
+	lantiq,phy2 = <0x7>;
+};
