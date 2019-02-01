@@ -102,7 +102,6 @@
 			big-endian;
 
 			gphy0: gphy@20 {
-				status = "disabled";
 				compatible = "lantiq,xrx300-gphy";
 				reg = <0x20 0x4>;
 
@@ -111,7 +110,6 @@
 			};
 
 			gphy1: gphy@68 {
-				status = "disabled";
 				compatible = "lantiq,xrx300-gphy";
 				reg = <0x68 0x4>;
 
@@ -244,7 +242,6 @@
 		};
 
 		dma0: dma@e104100 {
-			status = "disabled";
 			compatible = "lantiq,dma-xway";
 			reg = <0xe104100 0x800>;
 		};
@@ -286,7 +283,6 @@
 		};
 
 		eth0: eth@e108000 {
-			status = "disabled";
 			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "lantiq,xrx200-net";
